@@ -24,6 +24,9 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from datasets.utils import KMFlowTensorDataset
 
+import wandb
+wandb.login(key="e60f8238b8524c195edde224c6b3f3e645648586")
+
 torch.manual_seed(0)
 np.random.seed(0)
 
@@ -152,6 +155,12 @@ class Diffusion(object):
         num_iter = 0
         log_freq = 100
         print('Starting training...')
+        # Initialize wandb run
+        run = wandb.init(name = "diffusion", # Enter useful info to prevent confusions
+                        reinit = True,
+                        project = "Diffusion-PINN", # Runs under the same project can be plotted together
+                        )
+    
         for epoch in range(start_epoch, self.config.training.n_epochs):
             data_start = time.time()
             data_time = 0
@@ -181,7 +190,9 @@ class Diffusion(object):
                     logging.info(
                         f"step: {step}, loss: {loss.item()}, data time: {data_time / (i + 1)}"
                     )
-                #
+                # wandb logging
+                wandb.log({"Loss": loss.item(), "Data_time": data_time / (i + 1)})
+
                 writer.add_scalar('loss', loss.item(), step)
                 writer.add_scalar('data_time', data_time / (i + 1), step)
 
@@ -223,6 +234,8 @@ class Diffusion(object):
         logging.info(
             f"step: {step}, loss: {loss.item()}, data time: {data_time / (i + 1)}"
         )
+        # exit wandb run
+        run.finish()
 
         torch.save(
             states,
@@ -438,6 +451,12 @@ class ConditionalDiffusion(object):
         num_iter = 0
         log_freq = 100
         print('Starting training...')
+        # Initialize wandb run
+        run = wandb.init(name = "PI-diffusion", # Enter useful info to prevent confusions
+                        reinit = True,
+                        project = "Diffusion-PINN", # Runs under the same project can be plotted together
+                        )
+
         for epoch in range(start_epoch, self.config.training.n_epochs):
             data_start = time.time()
             data_time = 0
@@ -467,6 +486,8 @@ class ConditionalDiffusion(object):
                     logging.info(
                         f"step: {step}, loss: {loss.item()}, data time: {data_time / (i + 1)}"
                     )
+                # wandb logging
+                wandb.log({"Loss": loss.item(), "Data_time": data_time / (i + 1)})
                 #
                 writer.add_scalar('loss', loss.item(), step)
                 writer.add_scalar('data_time', data_time / (i + 1), step)
@@ -509,6 +530,8 @@ class ConditionalDiffusion(object):
         logging.info(
             f"step: {step}, loss: {loss.item()}, data time: {data_time / (i + 1)}"
         )
+        # finish wandb run
+        run.finish()
 
         torch.save(
             states,
